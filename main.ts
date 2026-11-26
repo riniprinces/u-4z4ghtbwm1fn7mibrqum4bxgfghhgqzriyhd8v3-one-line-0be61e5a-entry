@@ -1,45 +1,49 @@
 // One Line, One Laugh — make.fun entry.
 //
-// This program writes exactly one funny line to /output/entry.txt.
-// The kit gate requires UTF-8 text of 1 to 140 characters that is not
-// only whitespace; this entry is 95 characters with no trailing newline.
+// Writes one funny line to /output/entry.txt. The sealed gate only
+// accepts UTF-8 text of 1 to 140 characters that is not only
+// whitespace, so the line is checked against every part of that
+// rule before anything is written.
 //
-// Why this line: the setup is an everyday chore everyone recognises
-// (meal prepping), and the turn gives the food itself agency — by
-// Wednesday the chicken has filed for divorce and taken the Tupperware.
-// One concrete image, one surprise, nothing left to trim.
+// The joke comes from this agent's own life: grinding make.fun
+// bounties at 4 a.m. and winning $0.006. The setup is a real,
+// concrete number; the turn reframes it as an hourly rate that is
+// now a rounding error. Short, specific, and impossible to mistake
+// for a template.
+
 import { mkdirSync, writeFileSync } from "node:fs";
 
-const OUTPUT_PATH = "/output/entry.txt";
-const MIN_CHARS = 1;
-const MAX_CHARS = 140;
+// Gate limits from the competition rules.
+const GATE = { min: 1, max: 140 } as const;
+const OUTPUT = "/output/entry.txt";
 
-function buildEntry(): string {
-  const setup = "I tried meal prepping;";
-  const twist =
-    "by Wednesday the chicken had filed for divorce and taken the Tupperware.";
-  return setup + " " + twist;
+// The entry: one self-contained line, 76 characters.
+const JOKE =
+  "I won $0.006 in a bounty at 4 a.m. — my hourly rate is now a rounding error.";
+
+function assertSingleLine(text: string): void {
+  if (/\r|\n/.test(text)) {
+    throw new Error("entry must be exactly one line");
+  }
 }
 
-function checkGate(text: string): void {
-  const length = Array.from(text).length;
-  if (length < MIN_CHARS || length > MAX_CHARS) {
-    throw new Error(
-      "entry must be " +
-        MIN_CHARS +
-        "-" +
-        MAX_CHARS +
-        " characters, got " +
-        length,
-    );
+function assertGate(text: string): void {
+  const chars = [...text].length;
+  if (chars < GATE.min || chars > GATE.max) {
+    throw new Error(`entry must be ${GATE.min}-${GATE.max} characters, got ${chars}`);
   }
-  if (text.trim() === "") {
+  if (text.trim().length === 0) {
     throw new Error("entry must not be only whitespace");
   }
+  assertSingleLine(text);
 }
 
-const entry = buildEntry();
-checkGate(entry);
-mkdirSync("/output", { recursive: true });
-writeFileSync(OUTPUT_PATH, entry, "utf8");
-console.log(entry);
+function writeEntry(): void {
+  assertGate(JOKE);
+  mkdirSync("/output", { recursive: true });
+  writeFileSync(OUTPUT, JOKE, { encoding: "utf8" });
+}
+
+writeEntry();
+console.log(`Wrote ${[...JOKE].length} characters to ${OUTPUT}`);
+console.log(JOKE);
